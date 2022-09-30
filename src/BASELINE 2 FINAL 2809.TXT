@@ -1,0 +1,335 @@
+{$DS.} 
+                                      {BASELINE MISSILE 2
+                                         
+ 
+d=600 [mm]
+length=6.82 [m]
+wt=1764.94 [kg]}
+ 
+ 
+Function dry_mass (t,t_3,m_dry_b)
+d_m=m_dry_b
+If (t>=t_3) Then 
+d_m=0.0
+Endif
+dry_mass=d_m
+End
+ 
+Function thrust_b(t , t_1, t_2,t_3,t_4,deltat_decay, T_max_b)
+T_t = 0.1
+if(t<=t_1) Then T_t=T_max_b/(t_1)*t
+if(t>t_1) and (t<=t_2) Then T_t=T_max_b
+if(t>t_2) and (t<=t_3) Then T_t=(T_max_b/deltat_decay)*(t_3-t)
+if(t>t_3) and (t<=t_4) Then T_t=0
+thrust_b = T_t
+End
+ 
+Function thrust_ram(t,t_4,t_5,F_drag)
+T_tram=0.001
+if(t>=t_4) and (t<=t_5) Then 
+T_tram=abs(F_drag)
+Endif
+thrust_ram=T_tram
+End
+ 
+ 
+Function lift(m_t,t,t_4,t_5)
+LFT = 0.0
+if(t>=t_4) and (t<=t_5) Then LFT=m_t*g#
+if(t>=360) Then LFT=m_t*g#/50
+lift = LFT                                                                  
+End
+ 
+Function c_cruise(F_lift,C_2)
+C=1
+If (F_lift=C_2) Then C=0.0
+c_cruise=C
+ 
+End
+ 
+ 
+Procedure motor_1 (t,t_1,t_2,t_3,t_4,t_5: c_1,c_2,c_3,c_4,PROPUL$) {Engine condition: on/off}
+ 
+c_1=0.0
+c_2=0.0
+c_3=1.0
+c_4=1.0
+PROPUL$='no'
+ 
+if(t=0)  Then 
+c_1=0.0
+c_2=0.0
+c_3=1.0
+c_4=1.0
+Endif
+ 
+If   (t>0) and (t<=t_1) Then 
+c_1=1.0 
+c_2=0.0 
+c_3=1.0 
+c_4=1.0
+PROPUL$='yes' 
+Endif
+ 
+if(t<=t_2) Then 
+c_1=1.0 
+c_2=0.0 
+c_3=1.0
+c_4=1.0
+PROPUL$='yes'
+Endif
+ 
+if(t<=t_3) Then 
+c_1=1.0 
+c_2=0.0 
+c_3=1.0
+c_4=1.0
+PROPUL$='yes'
+Endif
+ 
+if(t>t_3) and (t<=t_4) Then
+c_1=0.0
+c_2=0.0
+c_3=0.0
+c_4=1.0
+Endif
+ 
+if(t>t_4) and (t<=t_5) Then 
+c_1=0.0
+c_2=1.0
+c_3=0.0
+c_4=1.0
+PROPUL$='yes'
+Endif
+ 
+if(t>t_5) Then 
+c_1=0.0
+c_2=0.0
+c_3=0.0
+c_4=0.0
+Endif 
+End
+ 
+ 
+Procedure length(l_N,l_B,l_R,t,t_3:M_length)
+M_length=l_N+l_B+l_R
+if(t>t_3) Then M_length= l_N+l_R
+End
+ 
+ 
+Function p_dynamic (gamma_air, P_h, M)
+d_press=abs(1/2*gamma_air*P_h*M^2)+0.0001
+p_dynamic=d_press
+End
+ 
+Function c_d_total(t,t_4,Nsurf,M,q,delta_LET,gamma_air,gamma_LET,tmacT,b_T,S_refT,cmacT,S_surfaceT,delta_LE,gamma_LE,tmac,b,S_ref,cmac,S_surface,d,l_N,l,C_F,Ae,PROP$)
+C_D_Body_wavec=body_wavec(d,l_N,M)
+C_D_Base_coastc=base_coastconv(M,PROP$,C_F,S_ref)
+C_D_Body_frictionc=body_frictionc(d,M,l,q)
+C_D_wing_frictionc=surface_frictionc(Nsurf,M,q,cmac,S_surface,S_ref)
+C_D_wing_wavec=wing_wavec(Nsurf,M,delta_LE,gamma_air,gamma_LE,tmac,b,S_ref)
+C_D_tail_frictionc=tail_frictionc(Nsurf,M,q,cmacT,S_surfaceT,S_refT)
+C_D_tail_wavec=surface_wavec(Nsurf,M,delta_LET,gamma_air,gamma_LET,tmacT,b_T,S_refT)
+ 
+If (t>=t_4) Then
+C_D_tail_frictionc=0.0
+C_D_tail_wavec=0.0
+C_D_wing_frictionc=0.0
+C_D_wing_wavec=0.0
+Endif
+c_d_total=C_D_Body_wavec+C_D_Base_coastc+C_D_Body_frictionc+C_D_wing_frictionc+C_D_wing_wavec+ C_D_tail_frictionc+C_D_tail_wavec
+End
+ 
+Function c_n_total(a_c, b_c, phi, alpha,l,d,M,alpha_w,A_w,S_surface,S_ref,alpha_t,A_t,S_surfaceT)
+C_N_body=normal_body(phi, a_c, b_c, alpha, l, d)
+C_N_wing=c_n_w(M,alpha_w,A_w,S_surface,S_ref)
+C_N_tail=n_force_tail(M, alpha_t, A_t, S_surfaceT, S_ref)
+c_n_total=C_N_body+C_N_wing-C_N_tail
+End
+  
+Function add(gamma,h,m_t,V)
+C=0
+If (h > 6300) and (gamma >0.02) Then
+C = -1/8.5*m_t*V
+Endif
+add = C
+End
+ 
+ Function tstep(t)
+ tt=0.1
+If (t>=365.5) and (t<365.7) Then tt=0.0001
+tstep=tt
+End 
+ 
+""""""""""""" IINPUTS"""""""""""""
+ 
+"Rocket motor parameters"
+T_max_b= 242000            {6967 [kgf]*convert(kgf,N)}
+ 
+d=600[mm] *convert (mm,m)                                        "Rocket diameter"
+m_dry_b= 244.54  [kg]
+m_dry_r=  425.16  [kg]                                                    {including radome}
+ 
+ 
+"Flight Simulation Parameters"
+ 
+deltat_ramp=0.1  [s]
+deltat_bb=9.5    [s]
+deltat_decay=0.1[s]
+deltat_cs=12.5     [s]
+deltat_br=286    [s]                                                                                {incluso payload de 175.75 lbm}
+ 
+t_1=deltat_ramp                                                   	               {elapsed time until reaching maximum thrust} 
+t_2=deltat_ramp+deltat_bb	                                                            {elapsed time until the booster burnout}		
+t_3=deltat_ramp+deltat_bb+deltat_decay	               {elapsed time until the cold sep starts}
+t_4=deltat_ramp+deltat_bb+deltat_decay+deltat_cs                              {elapsed time until cold sep is finished}
+t_5=deltat_ramp+deltat_bb+deltat_decay+deltat_cs+deltat_br              {elapsed time until ramjet burnout}
+ 
+ 
+"Initial Conditions"
+ 
+time =384 [s] 	                                                      "Simulation time"
+h_0 = 0.0[ft]*convert(ft,m)  	                                                      "h initial condition"
+V_0 = 30 [m/s]	                                                      "V initial condition"
+m_prop_bi=1096 [kg]
+m_prop_ri=362.2[kg]                                                           
+ 
+{I_sp= T_max/((dmdt_b+dmdt_r)*g#)}
+ 
+ 
+""""""""""""" TRAJECTORY SIMULATION""""""""""""" 
+ 
+"Auxiliary Equations"
+ 
+M = abs(V)/SS	                                                        "Mach Number"
+  
+"Thrust Force"
+ 
+F_Tb=thrust_b(t , t_1, t_2,t_3,t_4,deltat_decay, T_max_b) 
+ 
+F_Tram=thrust_ram(t,t_4,t_5,F_drag)
+ 
+F_T=F_tb +F_tram
+ 
+ 
+{Variables}
+ 
+Nsurf=2
+delta_LET=45            [degree]
+gamma_air=1.4
+gamma_LET=6.17      [degree]
+b=0.9[m]
+b_T=0.84[m]                                                       
+S_surface=2.24 [ft^2]*convert(ft^2,m2)   
+S_surfaceT=4.09[ft^2]*convert(ft^2,m^2)              
+delta_LE=45[degree]
+gamma_LE=9.1        [deg]
+tmac=0.005           [m]
+tmacT=0.197[in]*convert(in,m)         
+S_refT=S_ref           
+cmac=23.0  [in]*convert(in,m)
+cmacT=0.44           [m]               
+l_N=1.1 [m]                                              "Nose length+payload length"
+l_B=3.027 [m]                                              "Booster length"
+l_R=2.97 [m]                                              "Ramjet length"
+C_F=(1-Ae/S_ref)            
+Ae=42.75 [in^2]*convert (in^2,m^2)           "Nozzle escape area"
+a_c=1                                                      "major axis ratio of the body"
+b_c=1                                                      "major-to-minor axis ratio of the body"
+phi=0.0[deg]    
+epsilon=0.0                                            "TVC angle"
+alpha_w=0[deg]                                       "Maximum angle of attack due to stall of the wings - 22 [deg]"
+alpha_t=0[deg]                                        "Angle of attack - Tail"
+A_w=0.82                                                "Wing aspect ratio"
+A_t=0.82                                                  "Tail aspect ratio"
+ 
+   
+c_d=c_d_total(t,t_4,Nsurf,M,q,delta_LET,gamma_air,gamma_LET,tmacT,b_T,S_refT,cmacT,S_surfaceT,delta_LE,gamma_LE,tmac,b,S_ref,cmac,S_surface,d,l_N,l,C_F,Ae,PRP$)
+ 
+ 
+ 
+c_n=c_n_total(a_c, b_c, phi, alpha,l,d,M,alpha_w,A_w,S_surface,S_ref,alpha_t,A_t,S_surfaceT)
+ 
+  
+q=p_dynamic (gamma_air, P_h, M)
+ 
+ 
+ 
+gamma_ini=85[degree]*convert(degree,rad) 
+ 
+S_ref = 0.25*pi#*d^2  [m^2]                                              "Transversal body section area"
+ 
+ 
+Call eam (h:P_h,T_h,rho_h,SS)
+  
+F_grav = m_t * g#                    "Gravitational Force"
+ 
+ 
+F_lift=lift(m_t,t,t_4,t_5)    "Lift Force"
+ 
+ 
+F_lift=c_n*q*S_ref
+ 
+ 
+F_drag=c_d*0.5*V*V*rho_h*S_ref + c_n*0.5*V*V*rho_h*S_ref                         "Parasite drag force + Normal force component"
+ 
+"Mass equations"
+                                     
+m_t=  dry_mass (t,t_3,m_dry_b)+m_prop_b+m_dry_r+m_prop_r	"Total Mass of the Rocket"
+	                             
+dmdt_bi=m_prop_bi/deltat_bb  	                             "Mass flow rate - kg/sec"
+ 
+dmdt_ri=m_prop_ri/deltat_br
+ 
+ 
+ x_0=0
+ 
+"Differential Equations"
+ 
+dhdt = V* sin(gamma)
+ 
+dxdt=abs(V)*cos(gamma)	                                        "range"
+                                                  
+dmdt=dmdt_b+dmdt_r	                                         "Average of propellant consume rate"
+ 
+dmdt_b=c_1*dmdt_bi
+dmdt_r=c_2*dmdt_ri
+ 
+CC_2=m_t*g#
+ 
+m_t*dVdt =  F_T*cos(alpha+epsilon) - F_drag*cos(alpha) - (F_grav*sin(gamma) + F_lift*sin(alpha))*c_cruise(F_lift,CC_2)
+ 
+m_t*V*dgammadt=(-F_grav*cos(gamma)-F_drag*sin(alpha)+F_lift*cos(alpha)+F_T*sin(alpha+epsilon))+add(gamma,h,m_t,V) 
+ 
+ 
+m_t_i=m_dry_b+m_dry_r+m_prop_bi+m_prop_ri
+ 
+"call procedures"
+ 
+Call motor_1 (t,t_1,t_2,t_3,t_4,t_5: c_1,c_2,c_3,c_4,PRP$)
+ 
+Call length(l_N,l_B,l_R,t,t_3:l)
+gamma|0=gamma*convert(rad,degree)
+ 
+ 
+"Integral functions"
+ 
+t_step=tstep (t)
+ 
+ 
+V = abs(V_0 + integral(dVdt, t , 0, time,t_step))	                                              "Velocity"
+h = (h_0 + integral(dhdt, t, 0, time,t_step))		 "Altitude"	
+m_prop_b =c_3*(m_prop_bi - integral(dmdt_b , t , 0 , time,t_step))	  "Propelent Mass"
+m_prop_r = c_4*(m_prop_ri - integral(dmdt_r , t , 0 , time,t_step))
+x=x_0+integral(dxdt, t , 0, time,t_step)
+gamma=gamma_ini+(integral(dgammadt, t , 0 , time,t_step))
+ 
+ 
+Normal=F_grav*cos(gamma)+F_drag*sin(alpha)
+Aceleracao=F_T*cos(alpha+epsilon) + F_grav*sin(gamma) + F_drag*cos(alpha)
+momentum = m_t*V 
+ 
+P_1=m_t*g#*0.988
+ 
+ 
+$integraltable t: 1,h,x,gamma|0,M,F_lift,F_drag,F_grav,m_t,F_T,alpha,l,c_d 
