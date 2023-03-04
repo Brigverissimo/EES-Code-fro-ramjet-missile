@@ -1,4 +1,4 @@
-# EES-Code-fro-ramjet-missile
+# EES-Code-for-ramjet-missile
 Numeric solver to predict missile flight performance for EES.
 
 ## About
