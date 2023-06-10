@@ -2,7 +2,7 @@
 Numeric solver to predict missile flight performance for EES.
 
 ## About
-This project contains a *.ees file that predicts the flight trajectory of a missile.
+The available files include a *.ees code and table that predicts the flight profile of a missile. However, it does not include the necessary drag, lift, and atmospheric model subroutines.
 
 **Input variables**:
 * Diameter (mm)
@@ -10,6 +10,7 @@ This project contains a *.ees file that predicts the flight trajectory of a miss
 * Length (meters)
 * Thrust (N)
 * Gamma (radians)
+* Drag (at cruise level)
 
 **Output**:
 * Range (meters)
